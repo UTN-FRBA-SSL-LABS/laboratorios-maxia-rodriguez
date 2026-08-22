@@ -1,0 +1,9 @@
+=== Tests unitarios ===
+[carrito nuevo]
+  [OK]   carrito_contar(&c) == 0
+
+[agregar un producto]
+  [OK]   carrito_agregar(&c, p) == 1
+  [OK]   carrito_contar(&c) == 1
+
+--- 3/3 tests OK ---

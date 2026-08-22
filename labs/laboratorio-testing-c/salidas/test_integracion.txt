@@ -1,0 +1,2 @@
+=== Tests de integracion ===
+--- 0/0 tests OK ---
