@@ -328,14 +328,14 @@ make test
 
 **P2** — ¿Qué hace `s + 1`? ¿Por qué avanza al siguiente carácter y no al siguiente byte?
 
-> R:
+> R: s+1 desplaza la siguiente direccion almacenada en el puntero hacia la posicion del siguiente elemento en memoria (El caracter subsiguiente)
 
 **P3** — Si llamaras a `GetLength(NULL)`, ¿qué pasaría? ¿Por qué las precondiciones del contrato dicen `s != NULL`?
 
-> R:
+> R:Invocaría IsEmpty(NULL) o intentaría desreferenciar directamente *s para verificar el carácter nulo ('\0'). Intentar leer la dirección de memoria 0x0 es una violación de acceso a memoria no mapeada que desencadena un fallo de segmentación y aborta la ejecución del proceso inmediatamente.
 
 ```
-GETLENGTH_PASA=
+GETLENGTH_PASA=SI
 ```
 _(escribí SI cuando todos los tests de GetLength pasen)_
 
@@ -367,7 +367,7 @@ El `while` termina cuando alguna de las dos cadenas llega a `'\0'`. Después dev
 
 **P4** — ¿Qué dos casos están mal cubiertos por `return 1`? Describí un ejemplo para cada uno.
 
-> R:
+> R: s1 es más corta que s2, s1 llega a '\0' primero y hace que !IsEmpty(s1) sea falso, rompiendo el ciclo. La función devuelve 1 sin evaluar el resto de s2. Ejemplo: AreEqual("hola", "hola mundo") devuelve 1 en lugar de 0.
 
 #### Corrección
 
@@ -414,7 +414,9 @@ int AreDecimalDigits(const char *s) {
 
 **P5** — ¿Por qué la cadena vacía no debería considerarse un conjunto de dígitos decimales? Pensalo desde la especificación matemática.
 
-> R:
+> R: **Definición de lenguaje:** Un número se define sobre la clausura positiva $D^+$ del alfabeto de dígitos $D = \{'0', \dots, '9'\}$, exigiendo longitud $\vert{}s\vert{} \ge 1$. La cadena vacía ($\epsilon$) no contiene elementos de $D$.
+> **Cuantificación existencial:** La regla requiere que *exista al menos un carácter* y que *todos sean dígitos*. En la cadena vacía no existe ningún carácter.
+> **Consistencia:** Retornar `1` rompería las precondiciones de funciones de parsing como `atoi()`, las cuales fallan o dan comportamiento indefinido si reciben $\epsilon$.
 
 #### Corrección
 
@@ -425,7 +427,7 @@ make test
 ```
 
 ```
-AREDECIMALDIGITS_PASA=
+AREDECIMALDIGITS_PASA=SI
 ```
 _(escribí SI cuando todos los tests de AreDecimalDigits pasen)_
 
@@ -452,7 +454,7 @@ make test
 ```
 
 ```
-CONTAINS_PASA=
+CONTAINS_PASA=SI`
 ```
 _(escribí SI cuando todos los tests de Contains pasen)_
 
@@ -467,7 +469,7 @@ Antes de implementar, discutí con tu equipo:
 
 **P6** — Conclusión de la discusión:
 
-> R:
+> R:Es correcto tenerla en un módulo separado **`Conversion`**, aplicando el **Principio de Responsabilidad Única (SRP)** y maximizando la cohesión de los módulos:
 
 ---
 
@@ -494,7 +496,7 @@ int ToInteger(const char *s) {
 
 **P7** — El loop acumula correctamente el valor en `resultado`. ¿Qué está mal en el `return`?
 
-> R:
+> R: devuelve unicamente la variable signo, retornando siempre 1 o -1, descartando el numero procesado y acumulado en la variable resultado
 
 #### Corrección
 
@@ -506,10 +508,11 @@ make test
 
 **P8** — La expresión `*s - '0'` convierte un carácter dígito al entero correspondiente. ¿Por qué funciona? ¿Qué devuelve `'3' - '0'`?
 
-> R:
+> R: Funciona porque en el estándar de C (y en la codificación ASCII), los caracteres dígitos del `'0'` al `'9'` están guardados de forma **consecutiva y secuencial** (códigos del 48 al 57). Restar el código de `'0'` (48) calcula el desplazamiento exacto desde el origen, convirtiendo el carácter en su valor numérico real.
+> Devuelve el entero **`3`** (diferencia entre el valor ASCII 51 de `'3'` y el 48 de `'0'`: 51 - 48 = 3).S
 
 ```
-TOINTEGER_PASA=
+TOINTEGER_PASA=SI
 ```
 _(escribí SI cuando todos los tests de ToInteger pasen)_
 
@@ -562,7 +565,7 @@ foo
 
 **P9** — ¿Por qué `(void)argc` suprime un warning? ¿Cuándo sería necesario usar `argc`?
 
-> R:
+> R:Avisa al compilador que la variable no usada es intencional para evitar advertencias. Sirve para validar la cantidad de argumentos (`argc < N`) o iterar `argv` por índice.
 
 ---
 
@@ -589,7 +592,7 @@ Salida esperada:
 ```
 
 ```
-LONGITUDES_PASA=
+LONGITUDES_PASA=SI
 ```
 _(SI o NO)_
 
@@ -603,7 +606,7 @@ Abrí `mayorlongitud.c`. La estructura está escrita — falta completar una lí
 char *mayor = argv[1];
 for (char **arg = argv + 2; *arg != NULL; arg++)
     if (GetLength(*arg) > GetLength(mayor))
-        mayor = NULL; /* completar: ¿qué debería guardarse en mayor? */
+        mayor = *arg; /* completar: ¿qué debería guardarse en mayor? */
 printf("%s\n", mayor);
 ```
 
@@ -616,7 +619,7 @@ make mayorlongitud
 ```
 
 ```
-MAYORLONGITUD_PASA=
+MAYORLONGITUD_PASA=NO
 ```
 _(SI o NO)_
 
@@ -635,7 +638,7 @@ make todosiguales
 ```
 
 ```
-TODOSIGUALES_PASA=
+TODOSIGUALES_PASA=SI
 ```
 _(SI o NO)_
 
@@ -652,7 +655,7 @@ make suma
 ```
 
 ```
-SUMA_PASA=
+SUMA_PASA=SI
 ```
 _(SI o NO)_
 
@@ -662,15 +665,15 @@ _(SI o NO)_
 
 **P10** — `GetLength` es recursiva pero en C una llamada recursiva consume un stack frame. Si llamaras `GetLength` con un string de 1.000.000 de caracteres, ¿qué pasaría? ¿Cómo lo resolverías?
 
-> R:
+> R: Ocurriría un Stack Overflow (desbordamiento de pila) al agotar el espacio del *stack* por crear 1.000.000 de *stack frames*. La solucion es reemplazar la recursión por una implementación **iterativa** (usando un bucle `while` o `for`).
 
 **P11** — En la Parte III, todos los programas usan `char **arg` para iterar en vez de un índice entero. ¿Qué ventaja tiene este estilo? ¿Cuándo sería preferible usar el índice?
 
-> R:
+> R: Es el estilo idiomático en C, evita el cálculo repetido de direcciones (`argv[i]`) y aprovecha directamente el terminador `NULL` del arreglo. Cuando se requiere acceso aleatorio, conocer el índice numérico explícito del argumento o recorrer el arreglo en orden inverso.
 
 **P12** — En C, `"hola"` es un literal de tipo `const char *`. Si intentaras modificar un carácter con `s[0] = 'H'`, el comportamiento es indefinido. ¿Por qué? ¿En qué parte de la memoria viven los literales?
 
-> R:
+> R:Viven en la sección de **solo lectura** de la memoria (`.rodata` o *read-only data segment*). Modificar memoria protegida de solo lectura viola los permisos asignados por el sistema operativo, produciendo un comportamiento indefinido (típicamente un *Segmentation Fault*).
 
 ---
 
